@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flakehound"
+version = "0.1.0"
+description = "Find out WHY a test is flaky — not just that it is. Root-cause localization for flaky Python tests."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Aron Jose" }]
+keywords = ["testing", "flaky-tests", "pytest", "ci", "debugging", "root-cause", "fault-localization"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Topic :: Software Development :: Testing",
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+]
+dependencies = []   # MVP core has ZERO runtime deps — pure stdlib
+
+[project.optional-dependencies]
+llm = ["anthropic>=0.40"]   # optional: human-readable explanations (v0.4)
+dev = ["pytest>=7"]
+
+[project.scripts]
+flakehound = "flakehound.cli:main"
+[project.entry-points.pytest11]
+flakehound = "flakehound.pytest_plugin"
+
+[project.urls]
+Homepage = "https://github.com/aronjose/flakehound"
+Issues = "https://github.com/aronjose/flakehound/issues"
+
+[tool.setuptools.packages.find]
+include = ["flakehound*"]
+[tool.pytest.ini_options]
+# Normal `pytest` runs ONLY the real test suite. The deliberately-flaky demo
+# files in examples/ are analysed on demand via --flakehound, never collected here.
+testpaths = ["tests"]
