@@ -1,4 +1,4 @@
-# 🐺 Flakehound
+# Flakehound
 
 **Find out _why_ a test is flaky — not just _that_ it is.**
 
@@ -8,37 +8,37 @@ at some point. A whole market exists to *detect* and *quarantine* them
 (Trunk, BuildPulse, Datadog CI). **Almost nothing tells a developer the one thing
 they actually need: the line of code causing the non-determinism, and why.**
 
-That gap is real and proven-tractable: Google's internal research located
-flaky-test root causes at the code level with 82% accuracy — but it was never
-shipped as a tool anyone can use. Flakehound is an open, developer-facing tool
-that does exactly this for **Python**.
+Flakehound closes that gap for **Python**. Point it at a flaky test and it runs
+the test many times, diffs the passing runs against the failing runs, and reports
+the root cause — including when the bug lives in the *application code* your test
+imports, not just the test file.
 
 ```
 ════════════════════════════════════════════════════════════════
-  FLAKEHOUND  ·  test_completes_quickly
+  FLAKEHOUND  ·  test_no_blocked_recommendation
 ════════════════════════════════════════════════════════════════
 
-  Ran 12×   7 passed   5 failed   (42% failure rate)  →  FLAKY
+  Ran 10×   5 passed   5 failed   (50% failure rate)  →  FLAKY
 
-  VERDICT   TIMING / ASYNC   (confidence: HIGH)
-    • a blocking timing primitive (sleep/wait) is on the executed path
-    • failing runs are 3.7x slower on average (39ms vs 11ms)
+  VERDICT   RANDOMNESS / NON-DETERMINISM   (confidence: HIGH)
+    • a randomness source (random/uuid/secrets/unordered set) is on the executed path
+    • variable 'rec' takes disjoint values on pass vs fail
 
-  FAILS AT   examples/flaky_timing.py:16
-      16 │ assert elapsed < 0.025
+  FAILS AT   examples/test_flaky_appcode.py:7
+       7 │ assert rec != "blocked_item"
 
   ROOT-CAUSE CANDIDATES  (ranked)
-    1. flaky_timing.py:16   score 5.6
-         assert elapsed < 0.025
+    1. examples/test_flaky_appcode.py:7   score 5.7
+         assert rec != "blocked_item"
          ↳ failure surfaced here (AssertionError)
-         ↳ variable 'elapsed' differs (pass<0.0036  vs  fail>0.0259)
-    2. flaky_timing.py:7    score 3.1
-         time.sleep(random.uniform(0.0, 0.05))
-         ↳ non-deterministic source: time.sleep() [timing]
+         ↳ variable 'rec' differs (pass=['video_a','video_b'] vs fail=['blocked_item'])
+    2. examples/app_service.py:8   score 2.2          ← the real culprit, in app code
+         return random.choice(options)
+         ↳ non-deterministic source: random.choice() [random]
 
   SUGGESTED FIX
-    Replace fixed sleeps/timeouts with active polling or an explicit
-    wait for the condition. Never assert work finished within a budget.
+    Remove non-determinism from the assertion: seed the RNG, inject a
+    fixed value, sort before comparing, or assert a property instead.
 ════════════════════════════════════════════════════════════════
 ```
 
@@ -49,52 +49,79 @@ result would be deterministic. Flakehound runs the test many times and diffs the
 passing runs against the failing runs to find *where* and *why* they diverge:
 
 1. **Two-phase execution.** One phase runs the test untraced (clean outcomes +
-   real wall-clock timing); another traces every line + variable. (Tracing is
-   ~50× slow, so timing-based reasoning never trusts traced runs — a flaky test
-   is itself a Heisenbug, and we refuse to become one.)
+   real wall-clock timing); another traces every line + variable. Tracing is
+   ~50× slow, so timing reasoning never trusts traced runs — a flaky test is
+   itself a Heisenbug, and Flakehound refuses to become one.
 2. **Spectrum-based localization (Ochiai).** Lines that run in failing runs but
-   not passing ones get ranked suspicious.
+   not passing ones are ranked suspicious.
 3. **Discriminating-variable analysis.** Variables whose values cleanly separate
-   pass from fail (e.g. `elapsed` always under budget on pass, over on fail).
-4. **Non-determinism scan.** A static AST pass flags the usual culprits —
-   `time.sleep`, `random.*`, unordered `set` iteration, threads, clocks.
-5. **Classification + fix.** Maps the evidence to a category (timing / randomness
-   / order-dependency / concurrency) with a confidence and a concrete fix.
+   pass from fail (e.g. `winner` is always `alice` on pass).
+4. **Non-determinism scan.** A static AST pass over the code that *actually ran*
+   flags the usual culprits — `time.sleep`, `random.*`, unordered `set`
+   iteration, threads, clocks — **across every file the test touches.**
+5. **Classification + fix.** Maps the evidence to a category with a confidence
+   and a concrete fix.
 
 Zero runtime dependencies — the core is pure standard library.
 
 ## Install
 
 ```bash
-pip install -e .          # from this repo
+git clone https://github.com/aronjose2005/flakehound.git
+cd flakehound
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
 ```
 
 ## Usage
 
+### As a pytest plugin (recommended)
+
+Point it at any test in your suite by node id:
+
 ```bash
-flakehound path/to/test_file.py::test_function [-n RUNS]
+pytest --flakehound "tests/test_payments.py::test_charge"
 ```
 
-Try the bundled examples:
+It handles fixtures, setup/teardown, and parametrized tests, and finds root
+causes in the application code your test imports.
+
+### As a CLI (for plain test functions)
+
+```bash
+flakehound path/to/file.py::test_function
+```
+
+### Try the bundled demos
 
 ```bash
 flakehound examples/flaky_random.py::test_alice_wins
 flakehound examples/flaky_timing.py::test_completes_quickly
-flakehound examples/stable_pass.py::test_add        # → "No flakiness reproduced"
+pytest examples/test_flaky_appcode.py --flakehound "examples/test_flaky_appcode.py::test_no_blocked_recommendation"
 ```
 
-> **Status: v0.1 (alpha).** The core localization engine is working today on plain
-> test callables. The pytest plugin, order-dependency detection, the optional
-> LLM explanation layer, and the CI/GitHub Action are on the roadmap — see
-> [`BUILD_PLAN.md`](BUILD_PLAN.md).
+## Status
+
+**v0.1 — working.** What's done:
+
+- ✅ CLI **and** pytest plugin
+- ✅ Two-phase tracing engine (observer-effect aware)
+- ✅ Spectrum (Ochiai) localization + discriminating-variable analysis
+- ✅ Non-determinism scanning across project source (catches app-code bugs)
+- ✅ Classifier with confidence + targeted fixes
+- ✅ Solid support for **timing/async** and **randomness** flakes (order-dependency
+  and concurrency are currently heuristic)
+
+Roadmap (see [`BUILD_PLAN.md`](BUILD_PLAN.md)): dedicated **order-dependency**
+detection (run-in-isolation vs suite-order), an optional **LLM explanation**
+layer, a **GitHub Action**, and a measured **accuracy benchmark**.
 
 ## Accuracy
 
-Flakehound's claims are measured, not asserted. The methodology and the labeled
-benchmark live in [`BUILD_PLAN.md`](BUILD_PLAN.md) (§ Validation). The headline
-README number — *"correct category X% / root cause in top-5 Y% on N real-world
-Python flaky tests"* — is filled in once the benchmark is run at milestone M5.
+Flakehound's claims will be *measured*, not asserted. The methodology and labeled
+benchmark live in [`BUILD_PLAN.md`](BUILD_PLAN.md) (§ Validation); the headline
+accuracy number is filled in at milestone M5.
 
 ## License
 
-MIT.
+MIT — see [`LICENSE`](LICENSE).
