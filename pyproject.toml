@@ -15,7 +15,13 @@ classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
   "Topic :: Software Development :: Testing",
+  "Framework :: Pytest",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "License :: OSI Approved :: MIT License",
 ]
 dependencies = []   # MVP core has ZERO runtime deps — pure stdlib
@@ -30,8 +36,10 @@ flakehound = "flakehound.cli:main"
 flakehound = "flakehound.pytest_plugin"
 
 [project.urls]
-Homepage = "https://github.com/aronjose/flakehound"
-Issues = "https://github.com/aronjose/flakehound/issues"
+Homepage = "https://github.com/aronjose2005/flakehound"
+Repository = "https://github.com/aronjose2005/flakehound"
+Issues = "https://github.com/aronjose2005/flakehound/issues"
+Changelog = "https://github.com/aronjose2005/flakehound/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 include = ["flakehound*"]
