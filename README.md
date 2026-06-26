@@ -1,5 +1,10 @@
 # Flakehound
 
+[![CI](https://github.com/aronjose2005/flakehound/actions/workflows/ci.yml/badge.svg)](https://github.com/aronjose2005/flakehound/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.9%E2%80%933.13-grey.svg)](https://www.python.org/)
+[![Runtime deps](https://img.shields.io/badge/runtime%20deps-0-success.svg)](pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-grey.svg)](LICENSE)
+
 **Find out _why_ a test is flaky — not just _that_ it is.**
 
 Flaky tests (tests that pass and fail on the same code) are a systemic tax on
