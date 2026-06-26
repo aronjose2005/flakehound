@@ -1,0 +1,49 @@
+name: Bug report
+description: A flaky test Flakehound mis-diagnosed, or a crash.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Flaky-test bugs are easiest to fix with a
+        concrete, reproducible case — the more of the below you can fill in,
+        the faster this gets resolved.
+  - type: input
+    id: node-id
+    attributes:
+      label: Test node id
+      description: The test you pointed Flakehound at.
+      placeholder: tests/test_payments.py::test_charge
+    validations:
+      required: true
+  - type: input
+    id: failure-rate
+    attributes:
+      label: Observed pass/fail split
+      description: Roughly how often it fails, and over how many runs.
+      placeholder: 5 passed / 5 failed over 10 runs (~50%)
+    validations:
+      required: false
+  - type: textarea
+    id: expected
+    attributes:
+      label: What Flakehound reported vs. what you expected
+      description: Paste the verdict block, and tell us the real root cause if you know it.
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: How did you run it?
+      options:
+        - pytest plugin (--flakehound)
+        - CLI (flakehound ...)
+    validations:
+      required: true
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      placeholder: "3.11"
+    validations:
+      required: true
