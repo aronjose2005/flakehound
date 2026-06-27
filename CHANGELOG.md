@@ -8,8 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `--json` (CLI) and `--flakehound-json` (pytest plugin) for machine-readable
+  output suitable for CI gates and dashboards.
+- Non-zero CLI exit code when a flake is reproduced, so `flakehound test::id`
+  can gate a CI job directly; `--exit-zero` opts out.
+- `--no-color` flag plus automatic colour suppression when stdout isn't a TTY
+  or `NO_COLOR` is set, so piped/redirected reports no longer contain raw ANSI.
+- `--top N` to control how many ranked candidates are shown, and `--version`.
 - Continuous integration via GitHub Actions, running the test suite on
   Python 3.9 through 3.13.
+- Expanded test coverage: CLI end-to-end, a real `pytest --flakehound`
+  subprocess integration test, and unit tests for the scope boundary, the
+  tracer, the reporter, and the localizer's discrimination/Ochiai heuristics.
 - Regression test for the headline capability — locating the root cause of a
   flaky test when the non-determinism lives in *imported application code*
   rather than the test file.
@@ -20,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A structured bug-report issue template tailored to flaky-test reports.
 
 ### Fixed
+- ANSI colour codes are no longer emitted when output is piped or redirected.
+- Corrected a stale CLI docstring that claimed the pytest plugin was unshipped.
 - Corrected the GitHub project URLs in package metadata (they pointed at a
   non-existent `aronjose/` namespace instead of `aronjose2005/`).
 
