@@ -4,8 +4,10 @@ Flakehound CLI.
 Usage:
     flakehound path/to/test_file.py::test_function [-n RUNS]
 
-MVP scope: targets a plain callable in a file (no pytest collection yet).
-The pytest plugin lands in v0.2 — see BUILD_PLAN.md.
+Targets a plain callable in a file. For pytest-collected tests (fixtures,
+parametrize, classes), use the pytest plugin instead:
+
+    pytest --flakehound "tests/test_api.py::test_login"
 """
 
 from __future__ import annotations
