@@ -125,7 +125,7 @@ class Tracer:
             )
         return self._dispatch
 
-    def __enter__(self) -> "Tracer":
+    def __enter__(self) -> Tracer:
         self._t0 = time.perf_counter()
         sys.settrace(self._dispatch)
         return self

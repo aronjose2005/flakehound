@@ -49,3 +49,12 @@ flakehound = ["py.typed"]
 # Normal `pytest` runs ONLY the real test suite. The deliberately-flaky demo
 # files in examples/ are analysed on demand via --flakehound, never collected here.
 testpaths = ["tests"]
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+# High-signal rules only: pyflakes (dead code / likely bugs), warnings,
+# flake8-bugbear, and pyupgrade. Pure-formatting rules (line length, import
+# ordering) are intentionally omitted to avoid churning hand-formatted code.
+select = ["F", "W", "B", "UP"]

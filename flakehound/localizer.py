@@ -72,7 +72,7 @@ class Signals:
 
 def _read_source_lines(path: str) -> list:
     try:
-        with open(path, "r", encoding="utf-8") as fh:
+        with open(path, encoding="utf-8") as fh:
             return fh.read().splitlines()
     except Exception:
         return []
