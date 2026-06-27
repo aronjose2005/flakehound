@@ -45,7 +45,7 @@ def _c(text, code):
     return f"\033[{code}m{text}\033[0m"
 
 
-def render(target: str, signals, verdict) -> str:
+def render(target: str, signals, verdict, top: int = 5) -> str:
     out = []
     bar = "═" * 64
     out.append(_c(bar, "90"))
@@ -86,7 +86,7 @@ def render(target: str, signals, verdict) -> str:
             out.append(f"    {ln:>4} │ {src}")
 
     out.append("\n  " + _c("ROOT-CAUSE CANDIDATES", "1") + "  (ranked)")
-    for i, c in enumerate(signals.candidates[:5], 1):
+    for i, c in enumerate(signals.candidates[:top], 1):
         out.append(f"    {i}. {_rel(c.file)}:{c.line}   "
                    + _c(f"score {c.score:.1f}", "90"))
         if c.source:
@@ -112,3 +112,54 @@ def _wrap(text: str, width: int) -> list:
     if cur:
         lines.append(cur)
     return lines
+
+
+def to_dict(target: str, signals, verdict) -> dict:
+    """Machine-readable view of a Flakehound run — the basis for `--json`.
+
+    Stable shape suitable for CI gates, dashboards, or diffing across runs.
+    """
+    total = signals.passes + signals.fails
+    flaky = signals.passes > 0 and signals.fails > 0
+    return {
+        "target": target,
+        "flaky": flaky,
+        "runs": {
+            "total": total,
+            "passed": signals.passes,
+            "failed": signals.fails,
+            "failure_rate": round(signals.fails / total, 4) if total else 0.0,
+        },
+        "verdict": {
+            "category": verdict.category,
+            "confidence": verdict.confidence,
+            "rationale": list(verdict.rationale),
+            "fix": verdict.fix,
+        },
+        "failure": {
+            "type": signals.exc_type,
+            "message": signals.exc_msg,
+            "anchor": (
+                {"file": signals.fail_anchor[0], "line": signals.fail_anchor[1]}
+                if signals.fail_anchor else None
+            ),
+        },
+        "candidates": [
+            {
+                "file": c.file,
+                "line": c.line,
+                "score": round(c.score, 4),
+                "source": c.source,
+                "reasons": list(c.reasons),
+            }
+            for c in signals.candidates[:10]
+        ],
+        "nondeterminism_sources": [
+            {"file": f, "line": ln, "label": label, "kind": kind}
+            for (f, ln, label, kind) in signals.nondet_sources
+        ],
+    }
+
+
+def render_json(target: str, signals, verdict) -> str:
+    return json.dumps(to_dict(target, signals, verdict), indent=2)
