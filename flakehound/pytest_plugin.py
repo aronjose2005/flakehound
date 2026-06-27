@@ -16,6 +16,8 @@ def pytest_addoption(parser):
                     help="Analyse the given test node id for flakiness.")
     group.addoption("--flakehound-runs", action="store", type=int, default=30, metavar="N",
                     help="How many times to run the target test (default: 30).")
+    group.addoption("--flakehound-json", action="store_true", default=False,
+                    help="Emit the Flakehound report as JSON instead of the terminal view.")
 
 
 def _matches(item, target):
@@ -67,7 +69,10 @@ def _analyze(item):
     traced = runner.run_traced(call, target_files, n=max(20, runs), roots=roots)
     signals = localizer.localize(untraced, traced, target_files)
     verdict = classifier.classify(signals)
-    report = reporter.render(item.nodeid, signals, verdict)
+    if item.config.getoption("flakehound_json"):
+        report = reporter.render_json(item.nodeid, signals, verdict)
+    else:
+        report = reporter.render(item.nodeid, signals, verdict)
 
     # pytest captures stdout by default — suspend capture so the report prints.
     capman = item.config.pluginmanager.getplugin("capturemanager")
