@@ -105,6 +105,28 @@ flakehound examples/flaky_timing.py::test_completes_quickly
 pytest examples/test_flaky_appcode.py --flakehound "examples/test_flaky_appcode.py::test_no_blocked_recommendation"
 ```
 
+### CI & scripting
+
+Flakehound exits **non-zero when it reproduces a flake**, so you can gate a job
+on it directly:
+
+```bash
+flakehound "tests/test_payments.py::test_charge" || echo "flaky — blocking merge"
+```
+
+Pass `--exit-zero` to report without failing the build. For machine-readable
+output (CI dashboards, diffing runs), use `--json` on the CLI or
+`--flakehound-json` with the pytest plugin:
+
+```bash
+flakehound "tests/test_payments.py::test_charge" --json
+pytest --flakehound "tests/test_payments.py::test_charge" --flakehound-json
+```
+
+Other flags: `--no-color` (also honoured via the `NO_COLOR` env var, and colour
+is auto-disabled when output isn't a terminal), `--top N` to control how many
+ranked candidates are shown, and `--version`.
+
 ## Status
 
 **v0.1 — working.** What's done:
