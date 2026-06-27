@@ -67,7 +67,6 @@ def classify(signals) -> Verdict:
     rationale = []
     kinds = {k for *_rest, k in signals.nondet_sources}
 
-    timing_source = any(k == "timing" for *_r, k in signals.nondet_sources)
     random_source = any(k == "random" for *_r, k in signals.nondet_sources)
     thread_source = any(k == "thread" for *_r, k in signals.nondet_sources)
     # A *blocking* timing primitive (sleep/wait) is far stronger evidence than a

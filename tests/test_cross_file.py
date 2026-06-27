@@ -11,8 +11,6 @@ import os
 import sys
 import importlib.util
 
-import pytest
-
 from flakehound import runner, localizer, classifier
 
 EXAMPLES = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "examples"))
