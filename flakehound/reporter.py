@@ -2,7 +2,31 @@
 
 from __future__ import annotations
 
+import json
 import os
+import sys
+
+
+# Colour is auto-detected: off when piped/redirected or when NO_COLOR is set
+# (https://no-color.org), on for an interactive terminal. use_color() forces it.
+_USE_COLOR = None  # None => auto-detect; otherwise a forced bool
+
+
+def use_color(value) -> None:
+    """Force ANSI colour on/off. Pass None to restore auto-detection."""
+    global _USE_COLOR
+    _USE_COLOR = value
+
+
+def _color_enabled() -> bool:
+    if _USE_COLOR is not None:
+        return bool(_USE_COLOR)
+    if os.environ.get("NO_COLOR"):
+        return False
+    try:
+        return sys.stdout.isatty()
+    except Exception:
+        return False
 
 
 def _rel(path: str | None) -> str:
@@ -14,8 +38,10 @@ def _rel(path: str | None) -> str:
         return path
 
 
-# minimal ANSI without a dependency
+# minimal ANSI without a dependency; suppressed when colour is disabled
 def _c(text, code):
+    if not _color_enabled():
+        return str(text)
     return f"\033[{code}m{text}\033[0m"
 
 
