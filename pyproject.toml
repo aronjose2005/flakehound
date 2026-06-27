@@ -43,6 +43,8 @@ Changelog = "https://github.com/aronjose2005/flakehound/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 include = ["flakehound*"]
+[tool.setuptools.package-data]
+flakehound = ["py.typed"]
 [tool.pytest.ini_options]
 # Normal `pytest` runs ONLY the real test suite. The deliberately-flaky demo
 # files in examples/ are analysed on demand via --flakehound, never collected here.
